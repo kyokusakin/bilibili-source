@@ -1,4 +1,4 @@
-package dev.lavalink.bilibili
+package dev.lavalink.bilibili.plugin
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component

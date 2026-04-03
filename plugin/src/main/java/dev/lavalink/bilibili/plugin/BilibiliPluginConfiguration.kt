@@ -1,6 +1,7 @@
-package dev.lavalink.bilibili
+package dev.lavalink.bilibili.plugin
 
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager
+import dev.lavalink.bilibili.BilibiliAudioSourceManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration

@@ -1,4 +1,4 @@
-package dev.lavalink.bilibili
+package dev.lavalink.bilibili.plugin
 
 import org.springframework.context.annotation.Condition
 import org.springframework.context.annotation.ConditionContext
