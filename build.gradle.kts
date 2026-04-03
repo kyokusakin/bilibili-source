@@ -6,8 +6,25 @@ plugins {
     kotlin("jvm") version "2.3.0" apply false
 }
 
+fun gitCommand(vararg args: String): String? {
+    return runCatching {
+        providers.exec {
+            commandLine("git", *args)
+        }.standardOutput.asText.get().trim()
+    }.getOrNull()?.takeIf { it.isNotEmpty() }
+}
+
+val releaseTagPrefix = providers.gradleProperty("releaseTagPrefix").get()
+val releaseTag = gitCommand("tag", "--points-at", "HEAD", "$releaseTagPrefix*")
+    ?.lineSequence()
+    ?.map(String::trim)
+    ?.firstOrNull()
+    ?.removePrefix(releaseTagPrefix)
+val snapshotVersion = gitCommand("rev-parse", "--short=12", "HEAD")?.let { "$it-SNAPSHOT" }
+    ?: providers.gradleProperty("fallbackSnapshotVersion").get()
+
 group = providers.gradleProperty("pluginGroup").get()
-version = providers.gradleProperty("pluginVersion").get()
+version = releaseTag ?: snapshotVersion
 description = providers.gradleProperty("projectDescription").get()
 
 allprojects {

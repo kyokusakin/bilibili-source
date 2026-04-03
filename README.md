@@ -16,8 +16,8 @@ This repository follows the same general module layout as `youtube-source`:
 Output:
 
 ```text
-common/build/libs/bilibili-common-1.0.0-SNAPSHOT.jar
-plugin/build/libs/bilibili-plugin-1.0.0-SNAPSHOT.jar
+common/build/libs/bilibili-common-<version>.jar
+plugin/build/libs/bilibili-plugin-<version>.jar
 ```
 
 ## common
@@ -96,6 +96,12 @@ GitHub Releases are set up to attach both built jars automatically:
 - `bilibili-plugin-*.jar`
 
 Snapshot builds can continue to be resolved either from JitPack or from your own published snapshot repository.
+
+## Versioning
+
+- Snapshot builds use the current Git commit hash, for example `c98bb246dd23-SNAPSHOT`.
+- Release builds only activate when `HEAD` is tagged with `bilibili-source-<version>`.
+- Example release tag: `bilibili-source-1.0.0`
 
 ## Migration from the old fork
 
