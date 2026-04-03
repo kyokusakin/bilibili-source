@@ -102,6 +102,7 @@ Snapshot builds can continue to be resolved either from JitPack or from your own
 - Snapshot builds use the current Git commit hash, for example `c98bb246dd23-SNAPSHOT`.
 - Release builds only activate when `HEAD` is tagged with `bilibili-source-<version>`.
 - Example release tag: `bilibili-source-1.0.0`
+- Release process notes live in [RELEASING.md](RELEASING.md).
 
 ## Migration from the old fork
 
