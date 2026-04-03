@@ -8,12 +8,23 @@ plugins {
 description = providers.gradleProperty("pluginDescription").get()
 
 dependencies {
-    implementation(project(":common"))
+    compileOnly(project(":common"))
     compileOnly("dev.arbjerg.lavalink:plugin-api:${providers.gradleProperty("pluginApiVersion").get()}")
 }
 
 base {
     archivesName.set(providers.gradleProperty("pluginArtifactId").get())
+}
+
+val commonJar = project(":common").tasks.named<Jar>("jar")
+
+tasks.named<Jar>("jar") {
+    dependsOn(commonJar)
+
+    // Lavalink's local plugin loading expects a single self-contained plugin jar.
+    from(commonJar.map { zipTree(it.archiveFile) }) {
+        exclude("META-INF/MANIFEST.MF")
+    }
 }
 
 tasks.processResources {

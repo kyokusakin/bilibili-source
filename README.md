@@ -11,8 +11,8 @@ Published on Maven Central under `io.github.kyokusakin`.
 
 Current release:
 
-- `io.github.kyokusakin:bilibili-common:1.0.1`
-- `io.github.kyokusakin:bilibili-plugin:1.0.1`
+- `io.github.kyokusakin:bilibili-common:1.0.2`
+- `io.github.kyokusakin:bilibili-plugin:1.0.2`
 
 Maven Central base repository URL:
 
@@ -45,7 +45,7 @@ repositories {
 }
 
 dependencies {
-  implementation("io.github.kyokusakin:bilibili-common:1.0.1")
+  implementation("io.github.kyokusakin:bilibili-common:1.0.2")
 }
 ```
 
@@ -67,14 +67,14 @@ To use the plugin with Lavalink, declare the dependency and configure the plugin
 ```yaml
 lavalink:
   plugins:
-    - dependency: "io.github.kyokusakin:bilibili-plugin:1.0.1"
+    - dependency: "io.github.kyokusakin:bilibili-plugin:1.0.2"
       repository: "https://repo1.maven.org/maven2"
 ```
 
 Artifact path:
 
 ```text
-https://repo1.maven.org/maven2/io/github/kyokusakin/bilibili-plugin/1.0.1/
+https://repo1.maven.org/maven2/io/github/kyokusakin/bilibili-plugin/1.0.2/
 ```
 
 ### Using with Lavalink v4
@@ -104,7 +104,9 @@ plugins:
 If you are testing local builds instead of publishing to a remote repository, use one of the following:
 
 1. Run `./gradlew publishToMavenLocal` and load `bilibili-plugin` through `lavalink.plugins`.
-2. Copy both built jars from `common/build/libs/` and `plugin/build/libs/` into Lavalink's `plugins/` directory.
+2. Copy the `bilibili-plugin` jar from `plugin/build/libs/` into Lavalink's `plugins/` directory.
+
+From `1.0.2` onward, `bilibili-plugin` is self-contained and already bundles the runtime classes from `bilibili-common`.
 
 ### Releases
 
@@ -119,7 +121,7 @@ Released artifacts are published to Maven Central.
 
 - Snapshot builds use the current Git commit hash, for example `c98bb246dd23-SNAPSHOT`.
 - Release builds only activate when `HEAD` is tagged with `bilibili-source-<version>`.
-- Example release tag: `bilibili-source-1.0.1`
+- Example release tag: `bilibili-source-1.0.2`
 - Release process notes live in [RELEASING.md](RELEASING.md).
 
 ## Migration from the old fork
