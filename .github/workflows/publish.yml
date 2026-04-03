@@ -1,0 +1,76 @@
+name: Publish
+
+on:
+  push:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_USERNAME: ${{ vars.MAVEN_USERNAME }}
+      MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and Publish
+        run: ./gradlew clean build publish --no-daemon -PMAVEN_USERNAME=$MAVEN_USERNAME -PMAVEN_PASSWORD=$MAVEN_PASSWORD
+
+      - name: Upload common artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bilibili-common.jar
+          path: common/build/libs/bilibili-common-*.jar
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bilibili-plugin.jar
+          path: plugin/build/libs/bilibili-plugin-*.jar
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download common artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bilibili-common.jar
+          path: release-artifacts/common
+
+      - name: Download plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bilibili-plugin.jar
+          path: release-artifacts/plugin
+
+      - name: Upload artifacts to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "release-artifacts/common/*.jar,release-artifacts/plugin/*.jar"
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitDraftDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true

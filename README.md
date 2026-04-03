@@ -54,8 +54,9 @@ To use the plugin with Lavalink, declare the dependency and configure the plugin
 ```yaml
 lavalink:
   plugins:
+    # Replace VERSION with the latest release version or a commit-hash snapshot.
     - dependency: "dev.lavalink.bilibili:bilibili-plugin:VERSION"
-      repository: "https://maven.lavalink.dev/releases"
+      repository: "https://maven.lavalink.dev/releases" # use https://maven.lavalink.dev/snapshots for snapshots.
 ```
 
 ### Using with Lavalink v4
@@ -86,6 +87,15 @@ If you are testing local builds instead of publishing to a remote repository, us
 
 1. Run `./gradlew publishToMavenLocal` and load `bilibili-plugin` through `lavalink.plugins`.
 2. Copy both built jars from `common/build/libs/` and `plugin/build/libs/` into Lavalink's `plugins/` directory.
+
+### Releases
+
+GitHub Releases are set up to attach both built jars automatically:
+
+- `bilibili-common-*.jar`
+- `bilibili-plugin-*.jar`
+
+Snapshot builds can continue to be resolved either from JitPack or from your own published snapshot repository.
 
 ## Migration from the old fork
 
