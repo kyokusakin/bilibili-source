@@ -1,240 +1,56 @@
-# Lavalink
+# Bilibili Plugin for Lavalink
 
-<img align="right" src="/branding/lavalink.svg" width=200 alt="Lavalink logo">
+Standalone Lavalink plugin that adds Bilibili audio and video loading support.
 
-A standalone audio sending node based on [Lavaplayer](https://github.com/lavalink-devs/lavaplayer) and [Koe](https://github.com/KyokoBot/koe).
-Allows for sending audio without it ever reaching any of your shards.
+This repository is already split out from the Lavalink server tree. Running `./gradlew build` produces a plugin jar that can be dropped into Lavalink's `plugins` directory or published to your own Maven repository.
 
-Being used in production by FredBoat, Dyno, LewdBot, and more.
+## Build
 
-<details>
-<summary>Table of Contents</summary>
-
-- [Features](#features)
-- [Requirements](#requirements)
-- [Changelog](#changelog)
-- [Versioning policy](#versioning-policy)
-- [Server configuration](#server-configuration)
-  - [Config](#config)
-  - [Binary](#binary)
-  - [Docker](#docker)
-
-</details>
-
-## Features
-* DAVE e2ee support
-* Powered by Lavaplayer
-* Minimal CPU/memory footprint
-* Twitch/YouTube stream support
-* Event system
-* Seeking
-* Volume control
-* REST API for resolving Lavaplayer tracks, controlling players, and more
-* Statistics (good for load balancing)
-* Basic authentication
-* Prometheus metrics
-* Docker images
-* [Plugin support](PLUGINS.md) (beta)
-
-## Requirements
-
-* Java 11* LTS or newer required.
-* OpenJDK or Zulu running on Linux AMD64 is officially supported.
-
-Support for other JVMs is also best-effort. Periodic CPU utilization stats are prone not to work everywhere.
-
-**\*Java 11 appears to have some issues with Discord's TLS 1.3. Java 14 has other undiagnosed HTTPS problems. Use Java 13. Docker images have been updated.** See [#258](https://github.com/lavalink-devs/Lavalink/issues/258), [#260](https://github.com/lavalink-devs/Lavalink/issues/260)
-
-## Hardware Support
-
-Lavalink also runs on other hardware, but support is best-effort.
-Here is a list of known working hardware:
-
-| Operating System | Architecture | DAVE | Lavaplayer | JDA-NAS | Timescale | AVX2  |
-|------------------|--------------|------|------------|---------|-----------|-------|
-| linux            | x86-64       | ✅    | ✅          | ✅       | ✅         | ✅     |
-| linux            | x86          | ✅    | ✅          | ✅       | ✅         | ✅     |
-| linux            | arm          | ✅    | ✅          | ✅       | ✅         | ❌     |
-| linux            | armhf        | ✅    | ✅          | ❌       | ❌         | ❌     |
-| linux            | aarch32      | ✅    | ✅          | ❌       | ❌         | ❌     |
-| linux            | aarch64      | ✅    | ✅          | ✅       | ✅         | ❌     |
-| linux-musl       | x86-64       | ✅    | ✅          | ✅       | ✅         | ✅     |
-| linux-musl       | aarch64      | ✅    | ✅          | ✅       | ✅         | ❌     |
-| windows          | x86-64       | ✅    | ✅          | ✅       | ✅         | ✅     |
-| Windows          | x86          | ✅    | ✅          | ✅       | ✅         | ✅     |
-| Windows          | aarch64      | ✅    | ❌[^1]      | ✅       | ❌[^1]     | ❌[^1] |
-| darwin           | x86-64       | ✅    | ✅          | ✅       | ✅         | ✅     |
-| darwin           | aarch64e     | ✅    | ✅          | ✅       | ✅         | ❌     |
-
-[^1]: Windows on ARM is not natively supported, but seems to work fine with x86-64 JVMs & emulation.
-
-> [!NOTE]
-> The minimum supported version for glibc in DAVE is 2.28 (Rocky Linux 8) on x86-64 / aarch64 and 2.35 (Ubuntu 22.04) on other architectures.
-
-## Changelog
-
-Please see [here](CHANGELOG.md)
-
-## Versioning policy
-
-Lavalink follows [Semantic Versioning](https://semver.org/).
-
-The version number is composed of the following parts:
-
-    MAJOR breaking API changes
-    MINOR new backwards compatible features
-    PATCH backwards compatible bug fixes
-    PRERELEASE pre-release version
-    BUILD additional build metadata
-
-Version numbers can come in different combinations, depending on the release type:
-
-    `MAJOR.MINOR.PATCH` - Stable release
-    `MAJOR.MINOR.PATCH+BUILD` - Stable release with additional build metadata
-    `MAJOR.MINOR.PATCH-PRERELEASE` - Pre-release
-    `MAJOR.MINOR.PATCH-PRERELEASE+BUILD` - Pre-release additional build metadata
-
----
-
-## Server configuration
-
-### Config
-
-The server configuration is done in `application.yml`. You can find an example configuration [here](LavalinkServer/application.yml.example).
-
-Alternatively, you can also use environment variables to configure the server. The environment variables are named the same as the keys in the `application.yml` file, but in uppercase and with `.` replaced with `_`. For example, `server.port` becomes `SERVER_PORT`.
-For arrays, the index is appended to the key, starting at 0. For example, `LAVALINK_PLUGINS_0_DEPENDENCY` refers to the `dependency` key of the first plugin.
-
-<details>
-<summary>List of all env keys</summary>
-
-```env
-SERVER_PORT
-SERVER_ADDRESS
-
-LAVALINK_PLUGINS_0_DEPENDENCY
-LAVALINK_PLUGINS_0_REPOSITORY
-
-LAVALINK_PLUGINS_1_DEPENDENCY
-LAVALINK_PLUGINS_1_REPOSITORY
-
-LAVALINK_SERVER_PASSWORD
-LAVALINK_SERVER_SOURCES_YOUTUBE
-LAVALINK_SERVER_SOURCES_BANDCAMP
-LAVALINK_SERVER_SOURCES_SOUNDCLOUD
-LAVALINK_SERVER_SOURCES_TWITCH
-LAVALINK_SERVER_SOURCES_VIMEO
-LAVALINK_SERVER_SOURCES_HTTP
-LAVALINK_SERVER_SOURCES_LOCAL
-
-LAVALINK_SERVER_FILTERS_VOLUME
-LAVALINK_SERVER_FILTERS_EQUALIZER
-LAVALINK_SERVER_FILTERS_KARAOKE
-LAVALINK_SERVER_FILTERS_TIMESCALE
-LAVALINK_SERVER_FILTERS_TREMOLO
-LAVALINK_SERVER_FILTERS_VIBRATO
-LAVALINK_SERVER_FILTERS_DISTORTION
-LAVALINK_SERVER_FILTERS_ROTATION
-LAVALINK_SERVER_FILTERS_CHANNEL_MIX
-LAVALINK_SERVER_FILTERS_LOW_PASS
-
-LAVALINK_SERVER_BUFFER_DURATION_MS
-LAVALINK_SERVER_FRAME_BUFFER_DURATION_MS
-LAVALINK_SERVER_OPUS_ENCODING_QUALITY
-LAVALINK_SERVER_RESAMPLING_QUALITY
-LAVALINK_SERVER_TRACK_STUCK_THRESHOLD_MS
-LAVALINK_SERVER_USE_SEEK_GHOSTING
-
-LAVALINK_SERVER_PLAYER_UPDATE_INTERVAL
-LAVALINK_SERVER_YOUTUBE_SEARCH_ENABLED
-LAVALINK_SERVER_SOUNDCLOUD_SEARCH_ENABLED
-
-LAVALINK_SERVER_GC_WARNINGS
-
-LAVALINK_SERVER_RATELIMIT_IP_BLOCKS
-LAVALINK_SERVER_RATELIMIT_EXCLUDE_IPS
-LAVALINK_SERVER_RATELIMIT_STRATEGY
-LAVALINK_SERVER_RATELIMIT_SEARCH_TRIGGERS_FAIK
-LAVALINK_SERVER_RATELIMIT_RETRY_LIMIT
-
-LAVALINK_SERVER_YOUTUBE_CONFIG_EMAIL
-LAVALINK_SERVER_YOUTUBE_CONFIG_PASSWORD
-
-LAVALINK_SERVER_HTTP_CONFIG_PROXY_HOST
-LAVALINK_SERVER_HTTP_CONFIG_PROXY_PORT
-LAVALINK_SERVER_HTTP_CONFIG_PROXY_USER
-LAVALINK_SERVER_HTTP_CONFIG_PROXY_PASSWORD
-
-METRICS_PROMETHEUS_ENABLED
-METRICS_PROMETHEUS_ENDPOINT
-
-SENTRY_DSN
-SENTRY_ENVIRONMENT
-SENTRY_TAGS_SOME_KEY
-SENTRY_TAGS_ANOTHER_KEY
-
-LOGGING_FILE_PATH
-LOGGING_LEVEL_ROOT
-LOGGING_LEVEL_LAVALINK
-
-LOGGING_REQUEST_ENABLED
-LOGGING_REQUEST_INCLUDE_CLIENT_INFO
-LOGGING_REQUEST_INCLUDE_HEADERS
-LOGGING_REQUEST_INCLUDE_QUERY_STRING
-LOGGING_REQUEST_INCLUDE_PAYLOAD
-LOGGING_REQUEST_MAX_PAYLOAD_LENGTH
-
-LOGGING_LOGBACK_ROLLINGPOLICY_MAX_FILE_SIZE
-LOGGING_LOGBACK_ROLLINGPOLICY_MAX_HISTORY
+```bash
+./gradlew build
 ```
-</details>
 
+Output jar:
 
-### Binary
-Download binaries from the [Download Server](https://repo.lavalink.dev/artifacts/lavalink/), [GitHub releases](https://github.com/lavalink-devs/Lavalink/releases) (specific versions prior to `v3.5` can be found in the [CI Server](https://ci.fredboat.com/viewLog.html?buildId=lastSuccessful&buildTypeId=Lavalink_Build&tab=artifacts&guest=1)) or [GitHub actions](https://github.com/lavalink-devs/Lavalink/actions).
+```text
+build/libs/bilibili-plugin-1.0.0-SNAPSHOT.jar
+```
 
-Put an `application.yml` file in your working directory. ([Example here](LavalinkServer/application.yml.example))
+## Use with Lavalink
 
-Run with `java -jar Lavalink.jar` from the same directory
+### Option 1: local jar
 
-### Docker
+Copy the built jar into Lavalink's `plugins/` directory and restart Lavalink.
 
-Docker images can be found under [packages](https://github.com/lavalink-devs/Lavalink/pkgs/container/lavalink) with old builds prior to `v3.7.4` being available on [Docker Hub](https://hub.docker.com/r/fredboat/lavalink/).
-There are 2 image variants `Ubuntu` and `Alpine`, the `Alpine` variant is smaller and can be used with the `-alpine` suffix, for example `ghcr.io/freyacodes/lavalink:3-alpine`.
+### Option 2: Maven dependency
 
----
-
-Install [Docker](https://docs.docker.com/engine/install/) & [Docker Compose](https://docs.docker.com/compose/install/)
-
-Create a `docker-compose.yml` with the following content:
 ```yaml
-version: "3.8"
+plugins:
+  bilibili:
+    enabled: true
+    playlistLoadLimit: 6
 
-services:
-    lavalink:
-        image: ghcr.io/cog-creators/lavalink:3 # pin the image version to Lavalink v3
-        container_name: lavalink
-        restart: unless-stopped
-        environment:
-            - _JAVA_OPTIONS=-Xmx6G # set Java options here
-            - SERVER_PORT=2333 # set lavalink server port
-            - LAVALINK_SERVER_PASSWORD=youshallnotpass # set password for lavalink
-        volumes:
-            - ./application.yml:/opt/Lavalink/application.yml # mount application.yml from the same directory or use environment variables
-            - ./plugins/:/opt/Lavalink/plugins/ # persist plugins between restarts, make sure to set the correct permissions (user: 322, group: 322)
-        networks:
-            - lavalink
-        expose:
-            - 2333 # lavalink exposes port 2333 to connect to for other containers (this is for documentation purposes only)
-        ports:
-            - 2333:2333 # you only need this if you want to make your lavalink accessible from outside of containers
-networks:
-    lavalink: # create a lavalink network you can add other containers to, to give them access to Lavalink
-        name: lavalink
+lavalink:
+  plugins:
+    - dependency: "dev.lavalink.bilibili:bilibili-plugin:1.0.0-SNAPSHOT"
+      repository: "https://your.repo/releases"
 ```
 
-Run `docker compose up -d`. See [Docker Compose Up](https://docs.docker.com/engine/reference/commandline/compose_up/)
+## Configuration
 
-If your bot also runs in a docker container you can make that container join the lavalink network and use `lavalink` (service name) as the hostname to connect.
-See [Docker Networking](https://docs.docker.com/network/) & [Docker Compose Networking](https://docs.docker.com/compose/networking/)
+```yaml
+plugins:
+  bilibili:
+    enabled: true
+    playlistLoadLimit: 6
+```
 
+- `enabled`: whether the source manager should be registered.
+- `playlistLoadLimit`: limits how many Bilibili audio playlist pages are fetched. `-1` means unlimited.
+
+## Migration
+
+For backward compatibility with the older forked Lavalink layout, the plugin still reads these legacy keys if present:
+
+- `lavalink.server.sources.bilibili`
+- `lavalink.server.bilibiliPlaylistLoadLimit`

@@ -1,66 +1,76 @@
-import org.ajoberstar.grgit.Grgit
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
-buildscript {
-    repositories {
-        mavenLocal()
-        maven("https://plugins.gradle.org/m2/")
-        maven("https://repo.spring.io/plugins-release")
-        maven("https://jitpack.io")
-        maven("https://m2.dv8tion.net/releases")
-    }
+plugins {
+    kotlin("jvm") version "2.3.0"
+    `java-library`
+    `maven-publish`
+}
 
-    dependencies {
-        classpath("gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.5.2")
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:4.0.3")
-        classpath("com.adarshr:gradle-test-logger-plugin:4.0.0")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0")
-        classpath("org.jetbrains.kotlin:kotlin-allopen:2.3.0")
+group = "dev.lavalink.bilibili"
+version = "1.0.0-SNAPSHOT"
+description = "Bilibili source plugin for Lavalink"
+
+repositories {
+    mavenCentral()
+    maven("https://maven.lavalink.dev/releases")
+    maven("https://maven.lavalink.dev/snapshots")
+    maven("https://jitpack.io")
+}
+
+dependencies {
+    compileOnly("dev.arbjerg.lavalink:plugin-api:3.6.1")
+}
+
+base {
+    archivesName.set("bilibili-plugin")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+
+    withSourcesJar()
+}
+
+tasks.withType<KotlinJvmCompile> {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 
-allprojects {
-    group = "lavalink"
-    version = versionFromTag()
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+    options.compilerArgs.add("-Xlint:unchecked")
+    options.compilerArgs.add("-Xlint:deprecation")
+}
 
-    repositories {
-        mavenCentral() // main maven repo
-        mavenLocal()   // useful for developing
-        maven("https://m2.dv8tion.net/releases")
-        maven("https://maven.lavalink.dev/releases")
-        maven("https://maven.lavalink.dev/snapshots")
-        maven("https://jitpack.io") // build projects directly from GitHub
+tasks.processResources {
+    inputs.property("version", project.version)
+
+    filesMatching("lavalink-plugins/*.properties") {
+        expand("version" to project.version)
     }
 }
 
-subprojects {
-    apply(plugin = "java")
-    apply(plugin = "idea")
+publishing {
+    publications {
+        create<MavenPublication>("plugin") {
+            artifactId = "bilibili-plugin"
+            from(project.components["java"])
 
-    tasks.withType<KotlinJvmCompile> {
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_11
+            pom {
+                name.set("Bilibili Plugin")
+                description.set("Bilibili source plugin for Lavalink")
+                url.set("https://github.com/your-org/lavalink-bilibili")
+
+                licenses {
+                    license {
+                        name.set("The MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+            }
         }
     }
-
-    tasks.withType<JavaCompile> {
-        options.encoding = "UTF-8"
-        options.compilerArgs.add("-Xlint:unchecked")
-        options.compilerArgs.add("-Xlint:deprecation")
-    }
-}
-
-@SuppressWarnings("GrMethodMayBeStatic")
-fun versionFromTag(): String = Grgit.open(mapOf("currentDir" to project.rootDir)).use { git ->
-    val headTag = git.tag
-        .list()
-        .find { it.commit.id == git.head().id }
-
-    val clean = git.status().isClean || System.getenv("CI") != null
-    if (!clean) {
-        println("Git state is dirty, setting version as snapshot.")
-    }
-
-    return if (headTag != null && clean) headTag.name else "${git.head().id}-SNAPSHOT"
 }
