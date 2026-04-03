@@ -62,7 +62,7 @@ publishing {
             pom {
                 name.set("Bilibili Plugin")
                 description.set("Bilibili source plugin for Lavalink")
-                url.set("https://github.com/your-org/lavalink-bilibili")
+                url.set("https://github.com/kyokusakin/bilibili-source")
 
                 licenses {
                     license {
