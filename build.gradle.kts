@@ -7,11 +7,12 @@ plugins {
     `maven-publish`
 }
 
-group = "dev.lavalink.bilibili"
-version = "1.0.0-SNAPSHOT"
-description = "Bilibili source plugin for Lavalink"
+group = providers.gradleProperty("pluginGroup").get()
+version = providers.gradleProperty("pluginVersion").get()
+description = providers.gradleProperty("pluginDescription").get()
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven("https://maven.lavalink.dev/releases")
     maven("https://maven.lavalink.dev/snapshots")
@@ -19,7 +20,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("dev.arbjerg.lavalink:plugin-api:3.6.1")
+    compileOnly("dev.arbjerg.lavalink:plugin-api:${providers.gradleProperty("pluginApiVersion").get()}")
 }
 
 base {
@@ -56,7 +57,7 @@ tasks.processResources {
 publishing {
     publications {
         create<MavenPublication>("plugin") {
-            artifactId = "bilibili-plugin"
+            artifactId = providers.gradleProperty("pluginArtifactId").get()
             from(project.components["java"])
 
             pom {
@@ -69,6 +70,38 @@ publishing {
                         name.set("The MIT License")
                         url.set("https://opensource.org/licenses/MIT")
                     }
+                }
+
+                developers {
+                    developer {
+                        id.set("kyokusakin")
+                        name.set("kyokusakin")
+                    }
+                }
+
+                scm {
+                    connection.set("scm:git:https://github.com/kyokusakin/bilibili-source.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/kyokusakin/bilibili-source.git")
+                    url.set("https://github.com/kyokusakin/bilibili-source")
+                }
+            }
+        }
+    }
+
+    repositories {
+        val mavenUsername = findProperty("MAVEN_USERNAME") as String?
+        val mavenPassword = findProperty("MAVEN_PASSWORD") as String?
+        if (!mavenUsername.isNullOrBlank() && !mavenPassword.isNullOrBlank()) {
+            val targetRepo = if (version.toString().endsWith("-SNAPSHOT")) {
+                "https://maven.lavalink.dev/snapshots"
+            } else {
+                "https://maven.lavalink.dev/releases"
+            }
+
+            maven(targetRepo) {
+                credentials {
+                    username = mavenUsername
+                    password = mavenPassword
                 }
             }
         }

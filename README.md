@@ -1,8 +1,8 @@
-# Bilibili Plugin for Lavalink
+# bilibili-source
 
-Standalone Lavalink plugin that adds Bilibili audio and video loading support.
+A standalone Bilibili source plugin for Lavalink.
 
-This repository is already split out from the Lavalink server tree. Running `./gradlew build` produces a plugin jar that can be dropped into Lavalink's `plugins` directory or published to your own Maven repository.
+This repository follows the same general plugin-distribution style as `youtube-source`: build a jar, place it in Lavalink's `plugins` directory, or publish it to a Maven repository and load it through `lavalink.plugins`.
 
 ## Build
 
@@ -10,33 +10,34 @@ This repository is already split out from the Lavalink server tree. Running `./g
 ./gradlew build
 ```
 
-Output jar:
+Output:
 
 ```text
 build/libs/bilibili-plugin-1.0.0-SNAPSHOT.jar
 ```
 
-## Use with Lavalink
+## Plugin
 
-### Option 1: local jar
+This module is intended for use with Lavalink v3.
 
-Copy the built jar into Lavalink's `plugins/` directory and restart Lavalink.
+To use the plugin with Lavalink, declare the dependency and configure the plugin block.
 
-### Option 2: Maven dependency
+### Using with Lavalink v3
 
 ```yaml
-plugins:
-  bilibili:
-    enabled: true
-    playlistLoadLimit: 6
-
 lavalink:
   plugins:
-    - dependency: "dev.lavalink.bilibili:bilibili-plugin:1.0.0-SNAPSHOT"
-      repository: "https://your.repo/releases"
+    - dependency: "dev.lavalink.bilibili:bilibili-plugin:VERSION"
+      repository: "https://maven.lavalink.dev/releases"
 ```
 
-## Configuration
+If you are building this repository yourself instead of publishing it, you can also copy the built jar directly into Lavalink's `plugins/` directory.
+
+### Using with Lavalink v4
+
+This repository currently targets Lavalink v3's `plugin-api` line. If you want a true v4 plugin, the main work left is upgrading off `plugin-api:3.6.1` and revalidating the Spring/plugin wiring against the v4 server APIs.
+
+## Configuring the plugin
 
 ```yaml
 plugins:
@@ -45,12 +46,32 @@ plugins:
     playlistLoadLimit: 6
 ```
 
-- `enabled`: whether the source manager should be registered.
+- `enabled`: whether the Bilibili source manager should be registered.
 - `playlistLoadLimit`: limits how many Bilibili audio playlist pages are fetched. `-1` means unlimited.
 
-## Migration
+> [!NOTE]
+> This plugin keeps compatibility with the old fork-style config keys below, so existing users do not have to rename them immediately:
+>
+> - `lavalink.server.sources.bilibili`
+> - `lavalink.server.bilibiliPlaylistLoadLimit`
 
-For backward compatibility with the older forked Lavalink layout, the plugin still reads these legacy keys if present:
+## Migration from the old fork
 
-- `lavalink.server.sources.bilibili`
-- `lavalink.server.bilibiliPlaylistLoadLimit`
+This repository started as a forked Lavalink tree with Bilibili support embedded in `LavalinkServer`. It has now been split into a standalone plugin repository.
+
+If you were using the forked server:
+
+1. Remove the old built-in fork jar.
+2. Run standard Lavalink.
+3. Add this plugin through `lavalink.plugins` or drop the jar into `plugins/`.
+4. Keep your previous Bilibili config temporarily if needed; the plugin still reads the legacy keys listed above.
+
+## Development notes
+
+- Java target: `11`
+- CI runtime: `17`
+- Published artifact: `dev.lavalink.bilibili:bilibili-plugin`
+
+## License
+
+MIT. See [LICENSE](LICENSE).
