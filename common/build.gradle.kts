@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm")
     `java-library`
     `maven-publish`
+    signing
 }
 
 description = providers.gradleProperty("commonDescription").get()
@@ -19,6 +20,7 @@ publishing {
         create<MavenPublication>("common") {
             artifactId = providers.gradleProperty("commonArtifactId").get()
             from(components["java"])
+            artifact(tasks.named("javadocJar"))
 
             pom {
                 name.set("Bilibili Common")
@@ -50,21 +52,31 @@ publishing {
     }
 
     repositories {
-        val mavenUsername = findProperty("MAVEN_USERNAME") as String?
-        val mavenPassword = findProperty("MAVEN_PASSWORD") as String?
-        if (!mavenUsername.isNullOrBlank() && !mavenPassword.isNullOrBlank()) {
+        val centralUsername = findProperty("centralPortalUsername") as String?
+        val centralPassword = findProperty("centralPortalPassword") as String?
+        if (!centralUsername.isNullOrBlank() && !centralPassword.isNullOrBlank()) {
             val targetRepo = if (version.toString().endsWith("-SNAPSHOT")) {
-                "https://maven.lavalink.dev/snapshots"
+                providers.gradleProperty("centralSnapshotsUrl").get()
             } else {
-                "https://maven.lavalink.dev/releases"
+                providers.gradleProperty("centralReleasesUrl").get()
             }
 
             maven(targetRepo) {
                 credentials {
-                    username = mavenUsername
-                    password = mavenPassword
+                    username = centralUsername
+                    password = centralPassword
                 }
             }
         }
+    }
+}
+
+val signingKey = findProperty("signingInMemoryKey") as String?
+val signingPassword = findProperty("signingPassword") as String?
+
+if (!signingKey.isNullOrBlank() && !signingPassword.isNullOrBlank()) {
+    signing {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign(publishing.publications)
     }
 }

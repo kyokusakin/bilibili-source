@@ -13,8 +13,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      MAVEN_USERNAME: ${{ vars.MAVEN_USERNAME }}
-      MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+      ORG_GRADLE_PROJECT_centralPortalUsername: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
+      ORG_GRADLE_PROJECT_centralPortalPassword: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
+      CENTRAL_NAMESPACE: ${{ vars.CENTRAL_NAMESPACE }}
+      CENTRAL_PORTAL_USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
+      CENTRAL_PORTAL_PASSWORD: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
+      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+      ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -32,8 +37,21 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build and Publish
-        run: ./gradlew clean build publish --no-daemon -PMAVEN_USERNAME=$MAVEN_USERNAME -PMAVEN_PASSWORD=$MAVEN_PASSWORD
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Publish to Sonatype Central
+        if: github.event_name != 'release'
+        run: ./gradlew publish --no-daemon
+
+      - name: Promote release deployment to Central Portal
+        if: github.event_name != 'release' && startsWith(github.ref, 'refs/tags/bilibili-source-')
+        run: |
+          auth_token=$(printf '%s' "${CENTRAL_PORTAL_USERNAME}:${CENTRAL_PORTAL_PASSWORD}" | base64 -w 0)
+          curl --fail-with-body \
+            --request POST \
+            --header "Authorization: Bearer ${auth_token}" \
+            "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/${CENTRAL_NAMESPACE}?publishing_type=automatic"
 
       - name: Upload common artifact
         uses: actions/upload-artifact@v4

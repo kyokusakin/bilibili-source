@@ -1,4 +1,5 @@
 import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
@@ -27,6 +28,12 @@ group = providers.gradleProperty("pluginGroup").get()
 version = releaseTag ?: snapshotVersion
 description = providers.gradleProperty("projectDescription").get()
 
+tasks.register("printVersion") {
+    doLast {
+        println(project.version)
+    }
+}
+
 allprojects {
     group = rootProject.group
     version = rootProject.version
@@ -46,6 +53,14 @@ subprojects {
             sourceCompatibility = JavaVersion.VERSION_11
             targetCompatibility = JavaVersion.VERSION_11
             withSourcesJar()
+        }
+
+        tasks.register<Jar>("javadocJar") {
+            archiveClassifier.set("javadoc")
+
+            // Placeholder documentation jar for Maven Central validation.
+            from(rootProject.layout.projectDirectory.file("README.md"))
+            from(rootProject.layout.projectDirectory.file("LICENSE"))
         }
     }
 

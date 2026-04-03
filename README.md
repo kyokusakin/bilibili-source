@@ -7,6 +7,8 @@ This repository follows the same general module layout as `youtube-source`:
 - `common`: reusable Bilibili source manager for Lavaplayer-compatible projects.
 - `plugin`: Lavalink plugin wrapper around the `common` module.
 
+Published coordinates are intended for Maven Central under `io.github.kyokusakin`.
+
 ## Build
 
 ```bash
@@ -32,7 +34,7 @@ repositories {
 }
 
 dependencies {
-  implementation("dev.lavalink.bilibili:bilibili-common:VERSION")
+  implementation("io.github.kyokusakin:bilibili-common:VERSION")
 }
 ```
 
@@ -55,8 +57,7 @@ To use the plugin with Lavalink, declare the dependency and configure the plugin
 lavalink:
   plugins:
     # Replace VERSION with the latest release version or a commit-hash snapshot.
-    - dependency: "dev.lavalink.bilibili:bilibili-plugin:VERSION"
-      repository: "https://maven.lavalink.dev/releases" # use https://maven.lavalink.dev/snapshots for snapshots.
+    - dependency: "io.github.kyokusakin:bilibili-plugin:VERSION"
 ```
 
 ### Using with Lavalink v4
@@ -121,8 +122,8 @@ If you were using the forked server:
 - Java target: `11`
 - CI runtime: `17`
 - Published artifacts:
-  - `dev.lavalink.bilibili:bilibili-common`
-  - `dev.lavalink.bilibili:bilibili-plugin`
+  - `io.github.kyokusakin:bilibili-common`
+  - `io.github.kyokusakin:bilibili-plugin`
 
 ## License
 
