@@ -7,7 +7,18 @@ This repository follows the same general module layout as `youtube-source`:
 - `common`: reusable Bilibili source manager for Lavaplayer-compatible projects.
 - `plugin`: Lavalink plugin wrapper around the `common` module.
 
-Published coordinates are intended for Maven Central under `io.github.kyokusakin`.
+Published on Maven Central under `io.github.kyokusakin`.
+
+Current release:
+
+- `io.github.kyokusakin:bilibili-common:1.0.1`
+- `io.github.kyokusakin:bilibili-plugin:1.0.1`
+
+Maven Central base repository URL:
+
+```text
+https://repo1.maven.org/maven2
+```
 
 ## Build
 
@@ -30,11 +41,11 @@ Using in Gradle:
 
 ```kotlin
 repositories {
-  maven(url = "https://maven.lavalink.dev/releases")
+  mavenCentral()
 }
 
 dependencies {
-  implementation("io.github.kyokusakin:bilibili-common:VERSION")
+  implementation("io.github.kyokusakin:bilibili-common:1.0.1")
 }
 ```
 
@@ -56,8 +67,14 @@ To use the plugin with Lavalink, declare the dependency and configure the plugin
 ```yaml
 lavalink:
   plugins:
-    # Replace VERSION with the latest release version or a commit-hash snapshot.
-    - dependency: "io.github.kyokusakin:bilibili-plugin:VERSION"
+    - dependency: "io.github.kyokusakin:bilibili-plugin:1.0.1"
+      repository: "https://repo1.maven.org/maven2"
+```
+
+Artifact path:
+
+```text
+https://repo1.maven.org/maven2/io/github/kyokusakin/bilibili-plugin/1.0.1/
 ```
 
 ### Using with Lavalink v4
@@ -96,13 +113,13 @@ GitHub Releases are set up to attach both built jars automatically:
 - `bilibili-common-*.jar`
 - `bilibili-plugin-*.jar`
 
-Snapshot builds can continue to be resolved either from JitPack or from your own published snapshot repository.
+Released artifacts are published to Maven Central.
 
 ## Versioning
 
 - Snapshot builds use the current Git commit hash, for example `c98bb246dd23-SNAPSHOT`.
 - Release builds only activate when `HEAD` is tagged with `bilibili-source-<version>`.
-- Example release tag: `bilibili-source-1.0.0`
+- Example release tag: `bilibili-source-1.0.1`
 - Release process notes live in [RELEASING.md](RELEASING.md).
 
 ## Migration from the old fork
