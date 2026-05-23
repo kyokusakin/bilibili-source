@@ -21,14 +21,14 @@ bilibili-source-1.0.0
 
 ## GitHub configuration
 
-Set these repository settings before publishing:
+Set these repository secrets before publishing:
 
-- repo variable: `CENTRAL_NAMESPACE`
-  - value: `io.github.kyokusakin`
-- repo secret: `CENTRAL_PORTAL_USERNAME`
-- repo secret: `CENTRAL_PORTAL_PASSWORD`
-- repo secret: `SIGNING_IN_MEMORY_KEY`
-- repo secret: `SIGNING_PASSWORD`
+- `CENTRAL_PORTAL_USERNAME`
+- `CENTRAL_PORTAL_PASSWORD`
+- `SIGNING_IN_MEMORY_KEY`
+- `SIGNING_PASSWORD`
+
+The Central namespace is read from `centralNamespace` in `gradle.properties`. The GitHub repo variable `CENTRAL_NAMESPACE` may also be set for compatibility with older workflow runs, but the current workflow does not require it.
 
 ## Local verification
 
@@ -59,8 +59,9 @@ To test a Central release locally:
    ```
 
 3. The `publish.yml` workflow will:
+   - validate the Central Portal and signing secrets before attempting to publish
    - publish signed artifacts to the Sonatype compatibility endpoint
-   - call the Central manual upload endpoint with `publishing_type=automatic`
+   - call the Central manual upload endpoint for `centralNamespace` with `publishing_type=automatic`
 4. Open GitHub Releases for this repository.
 5. Create a new Release from the pushed tag.
 6. Use the notes from `docs/releases/1.0.0.md` as a starting point.
