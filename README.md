@@ -11,8 +11,8 @@ Published on Maven Central under `io.github.kyokusakin`.
 
 Current release:
 
-- `io.github.kyokusakin:bilibili-common:1.0.2`
-- `io.github.kyokusakin:bilibili-plugin:1.0.2`
+- `io.github.kyokusakin:bilibili-common:1.0.3`
+- `io.github.kyokusakin:bilibili-plugin:1.0.3`
 
 Maven Central base repository URL:
 
@@ -45,7 +45,7 @@ repositories {
 }
 
 dependencies {
-  implementation("io.github.kyokusakin:bilibili-common:1.0.2")
+  implementation("io.github.kyokusakin:bilibili-common:1.0.3")
 }
 ```
 
@@ -67,14 +67,14 @@ To use the plugin with Lavalink, declare the dependency and configure the plugin
 ```yaml
 lavalink:
   plugins:
-    - dependency: "io.github.kyokusakin:bilibili-plugin:1.0.2"
+    - dependency: "io.github.kyokusakin:bilibili-plugin:1.0.3"
       repository: "https://repo1.maven.org/maven2"
 ```
 
 Artifact path:
 
 ```text
-https://repo1.maven.org/maven2/io/github/kyokusakin/bilibili-plugin/1.0.2/
+https://repo1.maven.org/maven2/io/github/kyokusakin/bilibili-plugin/1.0.3/
 ```
 
 ### Using with Lavalink v4
@@ -125,7 +125,7 @@ Released artifacts are published to Maven Central.
 
 - Snapshot builds use the current Git commit hash, for example `c98bb246dd23-SNAPSHOT`.
 - Release builds only activate when `HEAD` is tagged with `bilibili-source-<version>`.
-- Example release tag: `bilibili-source-1.0.2`
+- Example release tag: `bilibili-source-1.0.3`
 - Release process notes live in [RELEASING.md](RELEASING.md).
 
 ## Migration from the old fork
