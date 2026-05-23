@@ -47,23 +47,31 @@ class BilibiliAudioTrack(
 
         TrackType.VIDEO -> {
             val videoCid = cid ?: throw IOException("Missing cid for Bilibili video track $id")
-            val request = HttpGet("${BilibiliAudioSourceManager.BASE_URL}x/player/playurl?bvid=$id&cid=$videoCid&fnval=16")
 
-            httpInterface.execute(request).use { response ->
-                HttpClientTools.assertSuccessWithContent(response, "bilibili video playback URL")
-
-                val data = JsonBrowser.parse(response.entity.content).get("data")
-                val dashAudio = data.get("dash").get("audio").values()
-
-                dashAudio
-                    .sortedByDescending { item: JsonBrowser -> item.get("id").`as`(Int::class.java) }
-                    .mapNotNull { item: JsonBrowser -> item.get("baseUrl").text() ?: item.get("base_url").text() }
-                    .firstOrNull()
-                    ?: data.get("durl").values().firstOrNull()?.get("url")?.text()
-                    ?: throw IOException("No playable Bilibili audio stream was returned for bvid=$id")
-            }
+            getProgressiveVideoUrl(fetchVideoPlaybackData(httpInterface, videoCid, "fnval=0&qn=16"))
+                ?: getDashAudioUrl(fetchVideoPlaybackData(httpInterface, videoCid, "fnval=16"))
+                ?: throw IOException("No playable Bilibili audio stream was returned for bvid=$id")
         }
     }
+
+    private fun fetchVideoPlaybackData(httpInterface: HttpInterface, videoCid: Long, options: String): JsonBrowser {
+        val request = HttpGet("${BilibiliAudioSourceManager.BASE_URL}x/player/playurl?bvid=$id&cid=$videoCid&$options")
+
+        httpInterface.execute(request).use { response ->
+            HttpClientTools.assertSuccessWithContent(response, "bilibili video playback URL")
+            return JsonBrowser.parse(response.entity.content).get("data")
+        }
+    }
+
+    private fun getProgressiveVideoUrl(data: JsonBrowser): String? =
+        data.get("durl").values().firstOrNull()?.get("url")?.text()
+
+    private fun getDashAudioUrl(data: JsonBrowser): String? =
+        data.get("dash").get("audio").values()
+            .filter { item: JsonBrowser -> item.get("codecs").text()?.startsWith("mp4a.") != false }
+            .sortedBy { item: JsonBrowser -> item.get("bandwidth").asLong(Long.MAX_VALUE) }
+            .mapNotNull { item: JsonBrowser -> item.get("baseUrl").text() ?: item.get("base_url").text() }
+            .firstOrNull()
 
     override fun makeShallowClone(): AudioTrack = BilibiliAudioTrack(trackInfo, type, id, cid, sourceManager)
 

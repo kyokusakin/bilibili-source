@@ -108,6 +108,10 @@ If you are testing local builds instead of publishing to a remote repository, us
 
 From `1.0.2` onward, `bilibili-plugin` is self-contained and already bundles the runtime classes from `bilibili-common`.
 
+### Playback notes
+
+Video playback prefers Bilibili's progressive MP4 URL before DASH audio streams. Some DASH `.m4s` audio streams can fail in Lavaplayer's native AAC decoder with errors such as `Error from decoder 16394`, so DASH audio is only used as a fallback when no progressive URL is available.
+
 ### Releases
 
 GitHub Releases are set up to attach both built jars automatically:
