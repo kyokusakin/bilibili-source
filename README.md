@@ -110,7 +110,7 @@ From `1.0.2` onward, `bilibili-plugin` is self-contained and already bundles the
 
 ### Playback notes
 
-Video playback prefers Bilibili's progressive MP4 URL before DASH audio streams. Some DASH `.m4s` audio streams can fail in Lavaplayer's native AAC decoder with errors such as `Error from decoder 16394`, so DASH audio is only used as a fallback when no progressive URL is available.
+Video playback prefers Bilibili's progressive MP4 URL, because some DASH `.m4s` fragments fail in Lavaplayer's fragmented MP4 reader with errors such as `Error from decoder 16386`. When the DASH stream list contains an HE-AAC entry (`mp4a.40.5`) the progressive MP4 carries HE-AAC audio as well, which Lavaplayer's native decoder rejects and its embedded jaad decoder aborts a few seconds in with `EOSException: stream overrun`; those videos are played from the AAC-LC (`mp4a.40.2`) DASH stream instead.
 
 ### Releases
 

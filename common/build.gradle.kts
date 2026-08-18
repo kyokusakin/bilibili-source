@@ -9,6 +9,12 @@ description = providers.gradleProperty("commonDescription").get()
 
 dependencies {
     compileOnly("com.github.walkyst.lavaplayer-fork:lavaplayer:${providers.gradleProperty("lavaplayerVersion").get()}")
+    testImplementation(kotlin("test"))
+    testImplementation("com.github.walkyst.lavaplayer-fork:lavaplayer:${providers.gradleProperty("lavaplayerVersion").get()}")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 base {
