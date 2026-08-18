@@ -48,9 +48,16 @@ class BilibiliAudioTrack(
         TrackType.VIDEO -> {
             val videoCid = cid ?: throw IOException("Missing cid for Bilibili video track $id")
 
-            getProgressiveVideoUrl(fetchVideoPlaybackData(httpInterface, videoCid, "fnval=0&qn=16"))
-                ?: getDashAudioUrl(fetchVideoPlaybackData(httpInterface, videoCid, "fnval=16"))
-                ?: throw IOException("No playable Bilibili audio stream was returned for bvid=$id")
+            val dashData = fetchVideoPlaybackData(httpInterface, videoCid, "fnval=16")
+            val dashAudioUrl = getDashAudioUrl(dashData)
+
+            if (dashAudioUrl != null && hasHeAacStream(dashData)) {
+                dashAudioUrl
+            } else {
+                getProgressiveVideoUrl(fetchVideoPlaybackData(httpInterface, videoCid, "fnval=0&qn=16"))
+                    ?: dashAudioUrl
+                    ?: throw IOException("No playable Bilibili audio stream was returned for bvid=$id")
+            }
         }
     }
 
@@ -66,13 +73,6 @@ class BilibiliAudioTrack(
     private fun getProgressiveVideoUrl(data: JsonBrowser): String? =
         data.get("durl").values().firstOrNull()?.get("url")?.text()
 
-    private fun getDashAudioUrl(data: JsonBrowser): String? =
-        data.get("dash").get("audio").values()
-            .filter { item: JsonBrowser -> item.get("codecs").text()?.startsWith("mp4a.") != false }
-            .sortedBy { item: JsonBrowser -> item.get("bandwidth").asLong(Long.MAX_VALUE) }
-            .mapNotNull { item: JsonBrowser -> item.get("baseUrl").text() ?: item.get("base_url").text() }
-            .firstOrNull()
-
     override fun makeShallowClone(): AudioTrack = BilibiliAudioTrack(trackInfo, type, id, cid, sourceManager)
 
     override fun getSourceManager(): AudioSourceManager = sourceManager
@@ -80,5 +80,24 @@ class BilibiliAudioTrack(
     enum class TrackType {
         VIDEO,
         AUDIO
+    }
+
+    companion object {
+        private const val AAC_LC_CODEC = "mp4a.40.2"
+
+        // Bilibili builds the progressive MP4 and the DASH streams from the same audio ladder, so an HE-AAC entry
+        // in the DASH list means the progressive URL carries HE-AAC as well. Lavaplayer's native AAC decoder only
+        // accepts AAC-LC and its embedded jaad fallback aborts on HE-AAC SBR frames with "stream overrun".
+        internal fun hasHeAacStream(data: JsonBrowser): Boolean =
+            data.get("dash").get("audio").values().any { item: JsonBrowser ->
+                item.get("codecs").text()?.let { it.startsWith("mp4a.") && it != AAC_LC_CODEC } == true
+            }
+
+        internal fun getDashAudioUrl(data: JsonBrowser): String? =
+            data.get("dash").get("audio").values()
+                .filter { item: JsonBrowser -> item.get("codecs").text() == AAC_LC_CODEC }
+                .sortedBy { item: JsonBrowser -> item.get("bandwidth").asLong(Long.MAX_VALUE) }
+                .mapNotNull { item: JsonBrowser -> item.get("baseUrl").text() ?: item.get("base_url").text() }
+                .firstOrNull()
     }
 }
