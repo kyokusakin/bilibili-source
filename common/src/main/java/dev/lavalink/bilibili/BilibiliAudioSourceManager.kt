@@ -67,12 +67,7 @@ class BilibiliAudioSourceManager : AudioSourceManager {
             "${BASE_URL}x/web-interface/view?bvid=$videoId"
         }
 
-        val responseJson = fetchJson(url, "bilibili video metadata")
-        if (responseJson.get("code").asLong(-1) != 0L) {
-            return AudioReference.NO_TRACK
-        }
-
-        val trackData = responseJson.get("data")
+        val trackData = fetchVideoMetadata(url, videoId) ?: return AudioReference.NO_TRACK
         val pages = trackData.get("pages").values()
 
         return if (pages.size > 1) {
@@ -284,6 +279,33 @@ class BilibiliAudioSourceManager : AudioSourceManager {
             }
         }
 
+    private fun fetchVideoMetadata(apiUrl: String, videoId: String): JsonBrowser? {
+        val apiData = getHttpInterface().use { httpInterface ->
+            httpInterface.execute(HttpGet(apiUrl)).use { response ->
+                if (response.statusLine.statusCode == 412) {
+                    null
+                } else {
+                    HttpClientTools.assertSuccessWithContent(response, "bilibili video metadata")
+                    JsonBrowser.parse(response.entity.content)
+                }
+            }
+        } ?: return try {
+            fetchVideoPageMetadata(videoId)
+        } catch (exception: IOException) {
+            throw IOException("Bilibili video metadata API returned HTTP 412 and video page fallback failed", exception)
+        }
+
+        return apiData.get("data").takeIf { apiData.get("code").asLong(-1) == 0L }
+    }
+
+    private fun fetchVideoPageMetadata(videoId: String): JsonBrowser =
+        getHttpInterface().use { httpInterface ->
+            httpInterface.execute(HttpGet(getVideoUrl(videoId))).use { response ->
+                HttpClientTools.assertSuccessWithContent(response, "bilibili video page")
+                parseVideoPageMetadata(EntityUtils.toString(response.entity, Charsets.UTF_8))
+            }
+        }
+
     private fun extractAudioSid(trackData: JsonBrowser): String =
         trackData.get("sid").text()
             ?: trackData.get("id").text()
@@ -297,6 +319,39 @@ class BilibiliAudioSourceManager : AudioSourceManager {
         const val BASE_URL = "https://api.bilibili.com/"
         private const val SOURCE_NAME = "bilibili"
         private const val UNKNOWN_ARTIST = "Unknown artist"
+        private const val PAGE_STATE_PREFIX = "window.__INITIAL_STATE__="
+
+        internal fun parseVideoPageMetadata(html: String): JsonBrowser {
+            val start = html.indexOf(PAGE_STATE_PREFIX).takeIf { it >= 0 }?.plus(PAGE_STATE_PREFIX.length)
+                ?: throw IOException("Bilibili video page did not contain initial state")
+            if (html.getOrNull(start) != '{') {
+                throw IOException("Bilibili video page contained invalid initial state")
+            }
+
+            var depth = 0
+            var inString = false
+            var escaped = false
+            for (index in start until html.length) {
+                when {
+                    escaped -> escaped = false
+                    html[index] == '\\' && inString -> escaped = true
+                    html[index] == '"' -> inString = !inString
+                    inString -> Unit
+                    html[index] == '{' -> depth++
+                    html[index] == '}' -> {
+                        depth--
+                        if (depth == 0) {
+                            val videoData = JsonBrowser.parse(html.substring(start, index + 1)).get("videoData")
+                            if (videoData.get("bvid").text() == null) {
+                                throw IOException("Bilibili video page did not contain video metadata")
+                            }
+                            return videoData
+                        }
+                    }
+                }
+            }
+            throw IOException("Bilibili video page contained incomplete initial state")
+        }
 
         private val SHORT_URL_PATTERN = Pattern.compile("^https?://(?:www\\.)?b23\\.tv/.+$")
         private val PAGE_PATTERN = Regex("[?&]p=(\\d+)")
