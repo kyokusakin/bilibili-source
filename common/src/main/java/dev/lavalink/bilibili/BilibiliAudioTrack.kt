@@ -24,24 +24,41 @@ class BilibiliAudioTrack(
 
     override fun process(executor: LocalAudioTrackExecutor) {
         sourceManager.getHttpInterface().use { httpInterface ->
-            val playbackUrl = getPlaybackUrl(httpInterface)
-
-            PersistentHttpStream(httpInterface, URI(playbackUrl), null).use { stream ->
+            openPlaybackStream(httpInterface).use { stream ->
                 processDelegate(MpegAudioTrack(trackInfo, stream), executor)
             }
         }
     }
 
-    private fun getPlaybackUrl(httpInterface: HttpInterface): String = when (type) {
+    internal fun openPlaybackStream(httpInterface: HttpInterface): PersistentHttpStream {
+        val urls = getPlaybackUrls(httpInterface)
+        val statuses = mutableListOf<Int>()
+        for (url in urls) {
+            val stream = PersistentHttpStream(httpInterface, URI(url), null)
+            var accepted = false
+            try {
+                val status = stream.checkStatusCode()
+                statuses += status
+                accepted = HttpClientTools.isSuccessWithContent(status)
+                if (accepted) return stream
+            } finally {
+                if (!accepted) stream.close()
+            }
+        }
+        throw IOException("Bilibili media CDN returned HTTP ${statuses.joinToString()} for ${trackInfo.identifier}")
+    }
+
+    private fun getPlaybackUrls(httpInterface: HttpInterface): List<String> = when (type) {
         TrackType.AUDIO -> {
             val request = HttpGet("${BilibiliAudioSourceManager.BASE_URL}audio/music-service-c/web/url?sid=$id&privilege=2&quality=2")
             httpInterface.execute(request).use { response ->
                 HttpClientTools.assertSuccessWithContent(response, "bilibili audio playback URL")
 
                 val data = JsonBrowser.parse(response.entity.content).get("data")
-                data.get("cdns").values().firstOrNull()?.text()
+                val url = data.get("cdns").values().firstOrNull()?.text()
                     ?: data.get("cdn").text()
                     ?: throw IOException("No playable Bilibili audio CDN was returned for sid=$id")
+                listOf(url)
             }
         }
 
@@ -49,14 +66,17 @@ class BilibiliAudioTrack(
             val videoCid = cid ?: throw IOException("Missing cid for Bilibili video track $id")
 
             val dashData = fetchVideoPlaybackData(httpInterface, videoCid, "fnval=16")
-            val dashAudioUrl = getDashAudioUrl(dashData)
+            val dashAudioUrls = getDashAudioUrls(dashData)
 
-            if (dashAudioUrl != null && hasHeAacStream(dashData)) {
-                dashAudioUrl
+            if (dashAudioUrls.isNotEmpty() && hasHeAacStream(dashData)) {
+                dashAudioUrls
             } else {
-                getProgressiveVideoUrl(fetchVideoPlaybackData(httpInterface, videoCid, "fnval=0&qn=16"))
-                    ?: dashAudioUrl
-                    ?: throw IOException("No playable Bilibili audio stream was returned for bvid=$id")
+                val progressive = fetchVideoPlaybackData(httpInterface, videoCid, "fnval=0&qn=16")
+                    .get("durl").values().firstOrNull()
+                val progressiveUrls = progressive?.let { getCdnUrls(it, it.get("url").text()) }.orEmpty()
+                progressiveUrls.ifEmpty { dashAudioUrls }.ifEmpty {
+                    throw IOException("No playable Bilibili audio stream was returned for bvid=$id")
+                }
             }
         }
     }
@@ -69,9 +89,6 @@ class BilibiliAudioTrack(
             return JsonBrowser.parse(response.entity.content).get("data")
         }
     }
-
-    private fun getProgressiveVideoUrl(data: JsonBrowser): String? =
-        data.get("durl").values().firstOrNull()?.get("url")?.text()
 
     override fun makeShallowClone(): AudioTrack = BilibiliAudioTrack(trackInfo, type, id, cid, sourceManager)
 
@@ -93,11 +110,20 @@ class BilibiliAudioTrack(
                 item.get("codecs").text()?.let { it.startsWith("mp4a.") && it != AAC_LC_CODEC } == true
             }
 
-        internal fun getDashAudioUrl(data: JsonBrowser): String? =
+        internal fun getDashAudioUrls(data: JsonBrowser): List<String> =
             data.get("dash").get("audio").values()
                 .filter { item: JsonBrowser -> item.get("codecs").text() == AAC_LC_CODEC }
                 .sortedBy { item: JsonBrowser -> item.get("bandwidth").asLong(Long.MAX_VALUE) }
-                .mapNotNull { item: JsonBrowser -> item.get("baseUrl").text() ?: item.get("base_url").text() }
-                .firstOrNull()
+                .firstNotNullOfOrNull { item ->
+                    getCdnUrls(item, item.get("baseUrl").text() ?: item.get("base_url").text())
+                        .takeIf { it.isNotEmpty() }
+                }.orEmpty()
+
+        private fun getCdnUrls(stream: JsonBrowser, primary: String?): List<String> =
+            (listOfNotNull(primary) +
+                stream.get("backupUrl").values().mapNotNull { it.text() } +
+                stream.get("backup_url").values().mapNotNull { it.text() })
+                .filter { it.isNotBlank() }
+                .distinct()
     }
 }

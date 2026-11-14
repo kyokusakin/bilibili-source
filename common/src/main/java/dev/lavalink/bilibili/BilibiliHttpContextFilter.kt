@@ -1,6 +1,7 @@
 package dev.lavalink.bilibili
 
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextFilter
+import org.apache.http.HttpHeaders
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
@@ -17,6 +18,12 @@ class BilibiliHttpContextFilter : HttpContextFilter {
         request.setHeader("User-Agent", USER_AGENT)
         request.setHeader("Accept", "application/json, text/plain, */*")
         request.setHeader("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+
+        if (request.uri.host?.endsWith(".bilivideo.com", ignoreCase = true) == true &&
+            !request.containsHeader(HttpHeaders.RANGE)
+        ) {
+            request.setHeader(HttpHeaders.RANGE, "bytes=0-")
+        }
     }
 
     override fun onRequestResponse(
